@@ -178,6 +178,53 @@ app.get("/events", async (req, res) => {
   }
 });
 
+// Standard x402 autodiscovery endpoint — used by agentic.market and other aggregators
+app.get("/.well-known/x402", (_req, res) => {
+  res.json({
+    version: "1",
+    payTo: WALLET,
+    network: "eip155:8453",
+    currency: "USDC",
+    name: "Polymarket Data API",
+    description: "Real-time Polymarket prediction market data — markets, orderbooks, prices, events. No API key needed, pay per request via x402 in USDC on Base.",
+    resources: [
+      {
+        path: "/markets",
+        method: "GET",
+        description: "Top active Polymarket prediction markets with prices, volume, and liquidity.",
+        params: "?limit=20&tag=crypto&sort=volume24hr&active=true",
+        price: { amount: "0.001", currency: "USDC" },
+      },
+      {
+        path: "/market/:conditionId",
+        method: "GET",
+        description: "Full details for a single Polymarket market by condition ID.",
+        price: { amount: "0.002", currency: "USDC" },
+      },
+      {
+        path: "/orderbook/:tokenId",
+        method: "GET",
+        description: "Live orderbook with top 10 bids/asks and spread for a Polymarket token.",
+        price: { amount: "0.005", currency: "USDC" },
+      },
+      {
+        path: "/prices",
+        method: "GET",
+        description: "Bulk midpoint prices for up to 50 Polymarket token IDs.",
+        params: "?tokens=id1,id2,id3",
+        price: { amount: "0.003", currency: "USDC" },
+      },
+      {
+        path: "/events",
+        method: "GET",
+        description: "Top active Polymarket events with nested markets and prices.",
+        params: "?limit=10",
+        price: { amount: "0.001", currency: "USDC" },
+      },
+    ],
+  });
+});
+
 app.get("/", (_req, res) => {
   res.json({
     name: "Polymarket Data API",
@@ -191,6 +238,7 @@ app.get("/", (_req, res) => {
       { path: "GET /prices", price: "$0.003", params: "?tokens=id1,id2,id3" },
       { path: "GET /events", price: "$0.001", params: "?limit=10" },
     ],
+    discovery: "GET /.well-known/x402",
     source: "Polymarket Gamma API + CLOB API (public endpoints)",
   });
 });
