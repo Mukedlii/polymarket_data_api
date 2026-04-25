@@ -39,43 +39,36 @@ const makeAccepts = (price) => ({
   payTo: WALLET,
 });
 
-app.use(
-  paymentMiddleware(
-    {
-      "GET /markets": {
-        accepts: makeAccepts("$0.001"),
-        description:
-          "Top active Polymarket prediction markets with prices, volume, and liquidity. Filter by tag, sort by volume or liquidity.",
-        mimeType: "application/json",
-      },
-      "GET /market/:id": {
-        accepts: makeAccepts("$0.002"),
-        description:
-          "Full details for a single Polymarket market by condition ID including outcomes, prices, and metadata.",
-        mimeType: "application/json",
-      },
-      "GET /orderbook/:tokenId": {
-        accepts: makeAccepts("$0.005"),
-        description:
-          "Live orderbook with top 10 bids and asks, best bid/ask prices, and spread for a Polymarket token.",
-        mimeType: "application/json",
-      },
-      "GET /prices": {
-        accepts: makeAccepts("$0.003"),
-        description:
-          "Bulk midpoint prices for up to 50 Polymarket token IDs in one request. Pass comma-separated token IDs.",
-        mimeType: "application/json",
-      },
-      "GET /events": {
-        accepts: makeAccepts("$0.001"),
-        description:
-          "Top active Polymarket events with nested markets, prices, and volume data.",
-        mimeType: "application/json",
-      },
-    },
-    resourceServer
-  )
-);
+const routes = {
+  "GET /markets": {
+    accepts: makeAccepts("$0.001"),
+    description: "Top active Polymarket prediction markets with prices, volume, and liquidity.",
+    mimeType: "application/json",
+  },
+  "GET /market/:id": {
+    accepts: makeAccepts("$0.002"),
+    description: "Full details for a single Polymarket market by condition ID.",
+    mimeType: "application/json",
+  },
+  "GET /orderbook/:tokenId": {
+    accepts: makeAccepts("$0.005"),
+    description: "Live orderbook with top 10 bids/asks and spread for a Polymarket token.",
+    mimeType: "application/json",
+  },
+  "GET /prices": {
+    accepts: makeAccepts("$0.003"),
+    description: "Bulk midpoint prices for up to 50 Polymarket token IDs.",
+    mimeType: "application/json",
+  },
+  "GET /events": {
+    accepts: makeAccepts("$0.001"),
+    description: "Top active Polymarket events with nested markets and prices.",
+    mimeType: "application/json",
+  },
+};
+
+// syncFacilitatorOnStart = false prevents startup crash when facilitator unreachable
+app.use(paymentMiddleware(routes, resourceServer, undefined, undefined, false));
 
 async function polyFetch(url) {
   const res = await fetch(url, {
