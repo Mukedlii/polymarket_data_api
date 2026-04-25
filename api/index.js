@@ -2,6 +2,7 @@ import express from "express";
 import { paymentMiddleware, x402ResourceServer } from "@x402/express";
 import { ExactEvmScheme } from "@x402/evm/exact/server";
 import { HTTPFacilitatorClient } from "@x402/core/server";
+import { createFacilitatorConfig } from "@coinbase/x402";
 
 const app = express();
 app.use(express.json());
@@ -13,19 +14,9 @@ const CDP_KEY_ID = process.env.CDP_API_KEY_ID;
 const CDP_KEY_SECRET = process.env.CDP_API_KEY_SECRET;
 
 if (!WALLET) throw new Error("WALLET_ADDRESS env var is required");
+if (!CDP_KEY_ID || !CDP_KEY_SECRET) throw new Error("CDP_API_KEY_ID and CDP_API_KEY_SECRET are required");
 
-const facilitatorConfig =
-  CDP_KEY_ID && CDP_KEY_SECRET
-    ? {
-        url: "https://api.cdp.coinbase.com/platform/v2/x402",
-        createAuthHeaders: async () => ({
-          Authorization: `Bearer ${Buffer.from(
-            `${CDP_KEY_ID}:${CDP_KEY_SECRET}`
-          ).toString("base64")}`,
-        }),
-      }
-    : { url: "https://x402.org/facilitator" };
-
+const facilitatorConfig = createFacilitatorConfig(CDP_KEY_ID, CDP_KEY_SECRET);
 const facilitator = new HTTPFacilitatorClient(facilitatorConfig);
 const resourceServer = new x402ResourceServer(facilitator).register(
   "eip155:8453",
@@ -67,8 +58,7 @@ const routes = {
   },
 };
 
-// syncFacilitatorOnStart = false prevents startup crash when facilitator unreachable
-app.use(paymentMiddleware(routes, resourceServer, undefined, undefined, false));
+app.use(paymentMiddleware(routes, resourceServer));
 
 async function polyFetch(url) {
   const res = await fetch(url, {
